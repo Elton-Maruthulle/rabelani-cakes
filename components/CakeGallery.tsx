@@ -1,41 +1,24 @@
 import React from "react";
 import { Cake } from "../types";
 
+import { Database, onValue, ref } from "firebase/database";
 interface CakeGalleryProps {
   onBack?: () => void;
   onAddToCart?: (cake: Cake) => void;
+  db?: Database;
 }
 
 const toTitle = (s: string) =>
   s.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-const CakeGallery: React.FC<CakeGalleryProps> = ({ onBack, onAddToCart }) => {
-  const files = import.meta.glob("./img/cakes/*.{png,jpg,jpeg,webp}", {
-    eager: true,
-  }) as Record<string, any>;
-
-  const fallbackFromImages: Cake[] = React.useMemo(() => {
-    return Object.entries(files).map(([path, mod], idx) => {
-      const url: string = mod.default ?? mod;
-      const base =
-        path
-          .split("/")
-          .pop()
-          ?.replace(/\.[^.]+$/, "") ?? `cake-${idx + 1}`;
-      const name = toTitle(base);
-      return {
-        id: 1000 + idx,
-        name,
-        image: url,
-        price: 0,
-        description: "",
-        category: "Cakes",
-      };
-    });
-  }, []);
-
-  const [cakes, setCakes] = React.useState<Cake[]>(fallbackFromImages);
+const CakeGallery: React.FC<CakeGalleryProps> = ({
+  onBack,
+  onAddToCart,
+  db,
+}) => {
+  const [cakes, setCakes] = React.useState<Cake[]>([]);
   const imgRefs = React.useRef<Record<number, HTMLImageElement | null>>({});
+  const [loaded, setLoaded] = React.useState<Record<number, boolean>>({});
   const [page, setPage] = React.useState<number>(1);
   const pageSize = 9;
   const totalPages = Math.max(1, Math.ceil(cakes.length / pageSize));
@@ -43,11 +26,19 @@ const CakeGallery: React.FC<CakeGalleryProps> = ({ onBack, onAddToCart }) => {
   const paged = cakes.slice(start, start + pageSize);
 
   React.useEffect(() => {
-    const mapRaw = localStorage.getItem("productsByCategory");
-    const map = mapRaw ? (JSON.parse(mapRaw) as Record<string, Cake[]>) : {};
-    const fromStore = map["Cakes"];
-    if (fromStore && Array.isArray(fromStore)) setCakes(fromStore);
-  }, []);
+    if (db) {
+      const r = ref(db, "productsByCategory/cakes");
+      return onValue(r, (snap) => {
+        const val = snap.val() as Cake[] | null;
+        if (val && Array.isArray(val)) setCakes(val);
+      });
+    } else {
+      const mapRaw = localStorage.getItem("productsByCategory");
+      const map = mapRaw ? (JSON.parse(mapRaw) as Record<string, Cake[]>) : {};
+      const fromStore = map["Cakes"];
+      if (fromStore && Array.isArray(fromStore)) setCakes(fromStore);
+    }
+  }, [db]);
 
   React.useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -69,8 +60,7 @@ const CakeGallery: React.FC<CakeGalleryProps> = ({ onBack, onAddToCart }) => {
 
       {cakes.length === 0 && (
         <div className="bg-white rounded-2xl border border-brand-dark/10 p-6 text-gray-600">
-          Place your images in `components/img/cakes` (png, jpg, jpeg, webp) and
-          they will appear here.
+          No products yet for Cakes. Add items from Admin.
         </div>
       )}
 
@@ -80,13 +70,21 @@ const CakeGallery: React.FC<CakeGalleryProps> = ({ onBack, onAddToCart }) => {
             key={cake.id}
             className="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition hover:-translate-y-1 border border-brand-dark/5"
           >
-            <div className="aspect-square overflow-hidden">
+            <div className="relative aspect-square overflow-hidden">
               <img
                 src={cake.image}
                 alt={cake.name}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
                 ref={(el) => (imgRefs.current[cake.id] = el)}
+                onLoad={() =>
+                  setLoaded((prev) => ({ ...prev, [cake.id]: true }))
+                }
               />
+              {!loaded[cake.id] && (
+                <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+              )}
             </div>
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
@@ -94,7 +92,7 @@ const CakeGallery: React.FC<CakeGalleryProps> = ({ onBack, onAddToCart }) => {
                   {cake.name}
                 </h3>
                 <span className="text-brand-green font-bold">
-                  ${cake.price.toFixed(2)}
+                  R{cake.price.toFixed(2)}
                 </span>
               </div>
               <p className="text-gray-600 text-sm mb-4">

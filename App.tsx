@@ -3,17 +3,17 @@ import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Marquee from "./components/Marquee";
 import CategoryGrid from "./components/CategoryGrid";
-import Features from "./components/Features";
-import FeaturedItem from "./components/FeaturedItem";
-import Testimonials from "./components/Testimonials";
-import CustomOrder from "./components/CustomOrder";
-import Footer from "./components/Footer";
-import CakeGallery from "./components/CakeGallery";
-import CupCakeGallery from "./components/CupCakeGallery";
-import ProductGallery from "./components/ProductGallery";
-import Admin from "./components/Admin";
-import Cart from "./components/Cart";
-import Orders from "./components/Orders";
+const Features = React.lazy(() => import("./components/Features"));
+const FeaturedItem = React.lazy(() => import("./components/FeaturedItem"));
+const Testimonials = React.lazy(() => import("./components/Testimonials"));
+const CustomOrder = React.lazy(() => import("./components/CustomOrder"));
+const Footer = React.lazy(() => import("./components/Footer"));
+const CakeGallery = React.lazy(() => import("./components/CakeGallery"));
+const CupCakeGallery = React.lazy(() => import("./components/CupCakeGallery"));
+const ProductGallery = React.lazy(() => import("./components/ProductGallery"));
+const Admin = React.lazy(() => import("./components/Admin"));
+const Cart = React.lazy(() => import("./components/Cart"));
+const Orders = React.lazy(() => import("./components/Orders"));
 import { CartItem, Cake, CheckoutDetails } from "./types";
 import { initializeApp } from "firebase/app";
 import {
@@ -35,8 +35,10 @@ import {
   get,
 } from "firebase/database";
 import { getStorage } from "firebase/storage";
+import { useToast } from "./components/Toast";
 
 const App: React.FC = () => {
+  const { show } = useToast();
   const [view, setView] = React.useState<
     "home" | "cakes" | "cupcakes" | "category" | "admin" | "cart" | "orders"
   >("home");
@@ -97,6 +99,7 @@ const App: React.FC = () => {
           c.id === cake.id ? { ...c, quantity: c.quantity + 1 } : c
         )
       );
+      show({ type: "success", title: "Added to cart", description: cake.name });
     } else {
       const item: CartItem = {
         id: cake.id,
@@ -107,6 +110,7 @@ const App: React.FC = () => {
         category: cake.category,
       };
       saveCart([item, ...cart]);
+      show({ type: "success", title: "Added to cart", description: cake.name });
     }
   };
 
@@ -122,6 +126,12 @@ const App: React.FC = () => {
     );
   const remove = (id: number) => saveCart(cart.filter((c) => c.id !== id));
   const clear = () => saveCart([]);
+  React.useEffect(() => {
+    // Notify on cart cleared
+    if (cart.length === 0) {
+      show({ type: "info", title: "Cart cleared" });
+    }
+  }, [cart.length]);
 
   React.useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -233,6 +243,7 @@ const App: React.FC = () => {
       customer: details,
     });
     saveCart([]);
+    show({ type: "success", title: "Order placed", description: orderNumber });
     setView("orders");
   };
 
@@ -294,43 +305,53 @@ const App: React.FC = () => {
         }}
       />
       <main>
-        {view === "cakes" && (
-          <CakeGallery onBack={() => setView("home")} onAddToCart={addToCart} />
-        )}
-        {view === "cupcakes" && (
-          <CupCakeGallery
-            onBack={() => setView("home")}
-            onAddToCart={addToCart}
-          />
-        )}
-        {view === "category" && currentCategory && (
-          <ProductGallery
-            category={currentCategory}
-            folderSlug={slugForCategory(currentCategory)}
-            onBack={() => setView("home")}
-            onAddToCart={addToCart}
-          />
-        )}
-        {view === "cart" && (
-          <Cart
-            items={cart}
-            onBack={() => setView("home")}
-            onInc={inc}
-            onDec={dec}
-            onRemove={remove}
-            onClear={clear}
-            onCheckout={checkout}
-          />
-        )}
-        {view === "orders" && user && (
-          <Orders userId={user.uid} db={db} onBack={() => setView("home")} />
-        )}
-        {view === "admin" && (
-          <Admin db={db} storage={storage} adminMode={adminMode} />
-        )}
+        <React.Suspense fallback={<div className="p-6">Loading...</div>}>
+          {view === "cakes" && (
+            <CakeGallery
+              db={db}
+              onBack={() => setView("home")}
+              onAddToCart={addToCart}
+            />
+          )}
+          {view === "cupcakes" && (
+            <CupCakeGallery
+              db={db}
+              onBack={() => setView("home")}
+              onAddToCart={addToCart}
+            />
+          )}
+          {view === "category" && currentCategory && (
+            <ProductGallery
+              db={db}
+              category={currentCategory}
+              folderSlug={slugForCategory(currentCategory)}
+              onBack={() => setView("home")}
+              onAddToCart={addToCart}
+            />
+          )}
+          {view === "cart" && (
+            <Cart
+              items={cart}
+              onBack={() => setView("home")}
+              onInc={inc}
+              onDec={dec}
+              onRemove={remove}
+              onClear={clear}
+              onCheckout={checkout}
+            />
+          )}
+          {view === "orders" && user && (
+            <Orders userId={user.uid} db={db} onBack={() => setView("home")} />
+          )}
+          {view === "admin" && (
+            <Admin db={db} storage={storage} adminMode={adminMode} />
+          )}
+        </React.Suspense>
         {view === "home" && (
           <>
             <Hero
+              db={db}
+              covers={categoryCovers}
               onStartOrder={() => {
                 setView("home");
                 setTimeout(
@@ -368,18 +389,28 @@ const App: React.FC = () => {
                 }}
               />
             </div>
-            <Features />
+            <React.Suspense fallback={<div className="p-6">Loading...</div>}>
+              <Features />
+            </React.Suspense>
             <div ref={featuredRef}>
-              <FeaturedItem db={db} />
+              <React.Suspense fallback={<div className="p-6">Loading...</div>}>
+                <FeaturedItem db={db} />
+              </React.Suspense>
             </div>
-            <Testimonials />
+            <React.Suspense fallback={<div className="p-6">Loading...</div>}>
+              <Testimonials />
+            </React.Suspense>
             <div ref={customOrderRef}>
-              <CustomOrder />
+              <React.Suspense fallback={<div className="p-6">Loading...</div>}>
+                <CustomOrder />
+              </React.Suspense>
             </div>
           </>
         )}
       </main>
-      <Footer />
+      <React.Suspense fallback={<div className="p-6">Loading...</div>}>
+        <Footer />
+      </React.Suspense>
     </div>
   );
 };

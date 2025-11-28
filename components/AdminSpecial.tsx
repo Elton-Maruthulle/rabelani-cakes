@@ -1,16 +1,13 @@
 import React from "react";
 import { Database, onValue, ref, set } from "firebase/database";
-import { FeaturedSpecial } from "../types";
-import {
-  Storage,
-  ref as sref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
+import { Cake, FeaturedSpecial } from "../types";
+import { CATEGORIES } from "../constants";
+import { FirebaseStorage } from "firebase/storage";
+import { useToast } from "./Toast";
 
 interface AdminSpecialProps {
   db: Database;
-  storage: Storage;
+  storage: FirebaseStorage;
 }
 
 const defaults: FeaturedSpecial = {
@@ -26,7 +23,10 @@ const defaults: FeaturedSpecial = {
 
 const AdminSpecial: React.FC<AdminSpecialProps> = ({ db, storage }) => {
   const [special, setSpecial] = React.useState<FeaturedSpecial>(defaults);
-  const [uploading, setUploading] = React.useState(false);
+  const [selectedCategory, setSelectedCategory] =
+    React.useState<string>("Cakes");
+  const [products, setProducts] = React.useState<Cake[]>([]);
+  const { show } = useToast();
 
   React.useEffect(() => {
     const r = ref(db, "specials/featured");
@@ -36,22 +36,25 @@ const AdminSpecial: React.FC<AdminSpecialProps> = ({ db, storage }) => {
     });
   }, [db]);
 
+  React.useEffect(() => {
+    const slug = selectedCategory.toLowerCase().replace(/\s+/g, "-");
+    const r = ref(db, `productsByCategory/${slug}`);
+    return onValue(r, (snap) => {
+      const val = snap.val() as Cake[] | null;
+      setProducts(Array.isArray(val) ? val : []);
+    });
+  }, [db, selectedCategory]);
+
   const save = async () => {
     const r = ref(db, "specials/featured");
     await set(r, special);
+    show({ type: "success", title: "Special saved" });
   };
 
-  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `specials/featured-${Date.now()}.${ext}`;
-    const dest = sref(storage, path);
-    await uploadBytes(dest, file);
-    const url = await getDownloadURL(dest);
-    setSpecial((s) => ({ ...s, image: url }));
-    setUploading(false);
+  const setFromProduct = (p: Cake) => {
+    if (!p.image) return;
+    setSpecial((s) => ({ ...s, image: p.image }));
+    show({ type: "info", title: "Special image updated", description: p.name });
   };
 
   return (
@@ -103,14 +106,50 @@ const AdminSpecial: React.FC<AdminSpecialProps> = ({ db, storage }) => {
           step="0.01"
         />
         <div className="md:col-span-2">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={onFile}
-            className="w-full border border-brand-dark/10 rounded-xl px-4 py-2"
-          />
-          {uploading && (
-            <div className="text-sm text-gray-500 mt-2">Uploading...</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm text-gray-500">Choose product image</div>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border border-brand-dark/10 rounded-xl px-3 py-2 bg-white"
+            >
+              {CATEGORIES.map((c) => c.name).map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {products.length === 0 ? (
+            <div className="text-sm text-gray-500">
+              No products in {selectedCategory} yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {products.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setFromProduct(p)}
+                  className="relative rounded-xl overflow-hidden border border-brand-dark/10 hover:border-brand-green/50 transition"
+                  title={p.name}
+                >
+                  <div className="aspect-square">
+                    {p.image && (
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-xs px-2 py-1 truncate">
+                    {p.name}
+                  </div>
+                </button>
+              ))}
+            </div>
           )}
         </div>
         <textarea
@@ -134,6 +173,8 @@ const AdminSpecial: React.FC<AdminSpecialProps> = ({ db, storage }) => {
           <img
             src={special.image}
             alt="preview"
+            loading="lazy"
+            decoding="async"
             className="h-12 w-12 rounded-lg object-cover"
           />
         )}

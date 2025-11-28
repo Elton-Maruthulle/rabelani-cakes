@@ -83,7 +83,7 @@ const Cart: React.FC<CartProps> = ({
                 />
                 <div className="flex-1">
                   <div className="font-bold text-brand-dark">{it.name}</div>
-                  <div className="text-gray-500">${it.price.toFixed(2)}</div>
+                  <div className="text-gray-500">R{it.price.toFixed(2)}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -116,7 +116,7 @@ const Cart: React.FC<CartProps> = ({
             </div>
             <div className="flex items-center justify-between font-bold text-brand-dark text-xl">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>R{total.toFixed(2)}</span>
             </div>
             {!showCheckout && (
               <button

@@ -66,7 +66,7 @@ const Orders: React.FC<OrdersProps> = ({ userId, db, onBack }) => {
                   Order #{o.orderNumber ?? o.id}
                 </div>
                 <div className="text-brand-green font-bold">
-                  ${o.total.toFixed(2)}
+                  R{o.total.toFixed(2)}
                 </div>
               </div>
               <div className="text-sm text-gray-600 mb-4">
@@ -105,7 +105,7 @@ const Orders: React.FC<OrdersProps> = ({ userId, db, onBack }) => {
                         {it.name}
                       </div>
                       <div className="text-gray-500">
-                        x{it.quantity} • ${it.price.toFixed(2)}
+                        x{it.quantity} • R{it.price.toFixed(2)}
                       </div>
                     </div>
                   </div>

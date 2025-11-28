@@ -1,51 +1,90 @@
 import React from "react";
 import { ArrowRight, ChefHat, Wheat, Star } from "lucide-react";
+import { Database, onValue, ref } from "firebase/database";
 
 interface HeroProps {
   onStartOrder?: () => void;
   onViewMenu?: () => void;
+  covers?: Record<string, string>;
+  db?: Database;
 }
 
-const Hero: React.FC<HeroProps> = ({ onStartOrder, onViewMenu }) => {
-  const cakesMap = import.meta.glob("./img/cakes/*.{png,jpg,jpeg,webp}", {
-    eager: true,
-  }) as Record<string, any>;
-  const cupcakesMap = import.meta.glob("./img/cupcakes/*.{png,jpg,jpeg,webp}", {
-    eager: true,
-  }) as Record<string, any>;
-  const cakes = React.useMemo(
-    () => Object.values(cakesMap).map((m: any) => m.default ?? m),
-    []
-  );
-  const cupcakes = React.useMemo(
-    () => Object.values(cupcakesMap).map((m: any) => m.default ?? m),
-    []
-  );
+const Hero: React.FC<HeroProps> = ({
+  onStartOrder,
+  onViewMenu,
+  covers,
+  db,
+}) => {
   const fallback =
     "https://images.unsplash.com/photo-1623334044303-241021148842?auto=format&fit=crop&q=80&w=800&h=800";
-  const pick = (arr: string[]) =>
-    arr.length ? arr[Math.floor(Math.random() * arr.length)] : fallback;
+  const cakeCover = covers?.["cakes"] || fallback;
+  const cupcakeCover = covers?.["cup-cakes"] || fallback;
   const [visibleIndex, setVisibleIndex] = React.useState(0);
-  const [lastCat, setLastCat] = React.useState<"cake" | "cupcake">("cupcake");
-  const [imgs, setImgs] = React.useState<string[]>([
-    pick(cakes),
-    pick(cupcakes),
-  ]);
+  const [imgs, setImgs] = React.useState<string[]>([cakeCover, cupcakeCover]);
+  const [pool, setPool] = React.useState<string[]>([cakeCover, cupcakeCover]);
+  React.useEffect(() => {
+    setPool((prev) => {
+      const base = [cakeCover, cupcakeCover].filter(Boolean);
+      const merged = [...base];
+      return merged.length ? merged : prev;
+    });
+    setImgs((prev) => {
+      const base = [cakeCover, cupcakeCover].filter(Boolean);
+      if (base.length >= 2) return [base[0], base[1]];
+      if (base.length === 1) return [base[0], base[0]];
+      return prev;
+    });
+  }, [cakeCover, cupcakeCover]);
+
+  React.useEffect(() => {
+    if (!db) return;
+    const r = ref(db, "productsByCategory");
+    return onValue(r, (snap) => {
+      const val = snap.val() as Record<
+        string,
+        Array<{ image?: string }>
+      > | null;
+      const images: string[] = [];
+      if (val) {
+        for (const key of Object.keys(val)) {
+          const arr = Array.isArray(val[key])
+            ? (val[key] as Array<{ image?: string }>)
+            : [];
+          for (const item of arr) {
+            if (item && typeof item.image === "string" && item.image)
+              images.push(item.image);
+          }
+        }
+      }
+      const base = [cakeCover, cupcakeCover].filter(Boolean);
+      const unique = Array.from(new Set([...images, ...base]));
+      setPool(unique.length ? unique : base);
+      setImgs((prev) => {
+        const a = unique[0] || base[0] || fallback;
+        const b = unique[1] || unique[0] || base[1] || a;
+        return [a, b];
+      });
+    });
+  }, [db, cakeCover, cupcakeCover]);
   React.useEffect(() => {
     const id = setInterval(() => {
-      const nextCat = lastCat === "cake" ? "cupcake" : "cake";
-      const pool = nextCat === "cake" ? cakes : cupcakes;
-      const url = pick(pool);
-      setImgs((prev) => {
-        const next = [...prev];
-        next[1 - visibleIndex] = url;
+      setVisibleIndex((v) => {
+        const next = 1 - v;
+        const current = imgs[v];
+        const choices = pool.filter((p) => p && p !== current);
+        const pick = choices.length
+          ? choices[Math.floor(Math.random() * choices.length)]
+          : current;
+        setImgs((prev) => {
+          const nextImgs = [...prev];
+          nextImgs[next] = pick;
+          return nextImgs;
+        });
         return next;
       });
-      setVisibleIndex((v) => 1 - v);
-      setLastCat(nextCat);
     }, 5000);
     return () => clearInterval(id);
-  }, [cakes, cupcakes, visibleIndex, lastCat]);
+  }, [pool, imgs]);
   return (
     <section className="relative px-6 py-12 md:py-24 max-w-7xl mx-auto overflow-hidden">
       {/* Subtle Background Texture via CSS class in parent or just here */}
@@ -63,12 +102,15 @@ const Hero: React.FC<HeroProps> = ({ onStartOrder, onViewMenu }) => {
         {/* Text Content */}
         <div className="space-y-8 z-10">
           <h1 className="opacity-0 animate-fade-in-up delay-100 text-5xl md:text-7xl lg:text-8xl font-bold text-brand-dark leading-[1] tracking-tight">
-            Artisan bakes <br /> made with{" "}
-            <span className="font-logo text-brand-green font-normal">love</span>
+            Sweet treats <br /> from the{" "}
+            <span className="font-logo text-brand-green font-normal">
+              heart!
+            </span>
           </h1>
           <p className="opacity-0 animate-fade-in-up delay-200 text-gray-500 text-lg md:text-xl max-w-md leading-relaxed font-light">
-            Wake up to the smell of fresh croissants, warm muffins, and
-            sourdough bread. Baked daily and delivered to your doorstep.
+            Rabelani Cakery specializes in homemade cakes for all types of
+            events, from birthdays to weddings. Our cakes are made with love and
+            care, using only the finest ingredients.
           </p>
 
           <div className="opacity-0 animate-fade-in-up delay-300 flex flex-col sm:flex-row items-start gap-4 pt-4">
@@ -141,9 +183,9 @@ const Hero: React.FC<HeroProps> = ({ onStartOrder, onViewMenu }) => {
 
             {/* Floating Badge - Delivery Time */}
             <div className="opacity-0 animate-scale-in delay-500 absolute top-8 right-8 md:-top-6 md:-right-6 bg-brand-dark text-white w-20 h-20 rounded-full flex flex-col items-center justify-center shadow-xl border-4 border-brand-light hover:scale-110 transition-transform duration-300 cursor-default z-20">
-              <span className="font-bold text-2xl leading-none">20</span>
+              <span className="font-bold text-lg leading-none">Made</span>
               <span className="text-[10px] uppercase tracking-wide opacity-80">
-                mins
+                with love
               </span>
             </div>
 

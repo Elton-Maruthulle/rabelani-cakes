@@ -2,6 +2,7 @@ import React from "react";
 import { initializeApp } from "firebase/app";
 import { getDatabase, onValue, ref, set } from "firebase/database";
 import { CartItem } from "../types";
+import { useToast } from "./Toast";
 
 type AdminOrder = {
   id: string;
@@ -38,6 +39,7 @@ const AdminOrders: React.FC = () => {
     [app]
   );
   const [orders, setOrders] = React.useState<AdminOrder[]>([]);
+  const { show } = useToast();
 
   React.useEffect(() => {
     const ordersRoot = ref(db, "orders");
@@ -74,10 +76,16 @@ const AdminOrders: React.FC = () => {
   const markCompleted = (uid: string, oid: string) => {
     const statusRef = ref(db, `orders/${uid}/${oid}/status`);
     set(statusRef, "completed");
+    show({
+      type: "success",
+      title: "Order marked completed",
+      description: oid,
+    });
   };
   const reopenOrder = (uid: string, oid: string) => {
     const statusRef = ref(db, `orders/${uid}/${oid}/status`);
     set(statusRef, "placed");
+    show({ type: "info", title: "Order reopened", description: oid });
   };
 
   return (
@@ -97,7 +105,7 @@ const AdminOrders: React.FC = () => {
                   {o.orderNumber ?? o.id}
                 </div>
                 <div className="text-brand-green font-bold">
-                  ${o.total.toFixed(2)}
+                  R{o.total.toFixed(2)}
                 </div>
               </div>
               <div className="text-xs text-gray-500">User: {o.uid}</div>
@@ -152,7 +160,7 @@ const AdminOrders: React.FC = () => {
                     <div className="text-sm">
                       <div className="text-brand-dark">{it.name}</div>
                       <div className="text-gray-600">
-                        x{it.quantity} • ${it.price.toFixed(2)}
+                        x{it.quantity} • R{it.price.toFixed(2)}
                       </div>
                     </div>
                   </div>

@@ -1,11 +1,13 @@
 import React from "react";
 import { Cake } from "../types";
+import { Database, onValue, ref } from "firebase/database";
 
 interface ProductGalleryProps {
   category: string;
   folderSlug: string;
   onBack?: () => void;
   onAddToCart?: (cake: Cake) => void;
+  db?: Database;
 }
 
 const toTitle = (s: string) =>
@@ -16,104 +18,11 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
   folderSlug,
   onBack,
   onAddToCart,
+  db,
 }) => {
-  const filesMap: Record<string, Record<string, any>> = {
-    cakes: import.meta.glob("./img/cakes/*.{png,jpg,jpeg,webp}", {
-      eager: true,
-    }) as Record<string, any>,
-    cupcakes: import.meta.glob("./img/cupcakes/*.{png,jpg,jpeg,webp}", {
-      eager: true,
-    }) as Record<string, any>,
-    "wedding-cakes": import.meta.glob(
-      "./img/wedding-cakes/*.{png,jpg,jpeg,webp}",
-      {
-        eager: true,
-      }
-    ) as Record<string, any>,
-    "design-cakes": import.meta.glob(
-      "./img/design-cakes/*.{png,jpg,jpeg,webp}",
-      {
-        eager: true,
-      }
-    ) as Record<string, any>,
-    "butter-scones": import.meta.glob(
-      "./img/butter-scones/*.{png,jpg,jpeg,webp}",
-      { eager: true }
-    ) as Record<string, any>,
-    croissants: import.meta.glob("./img/croissants/*.{png,jpg,jpeg,webp}", {
-      eager: true,
-    }) as Record<string, any>,
-    "glazed-donuts": import.meta.glob(
-      "./img/glazed-donuts/*.{png,jpg,jpeg,webp}",
-      { eager: true }
-    ) as Record<string, any>,
-    "celebration-cakes": import.meta.glob(
-      "./img/celebration-cakes/*.{png,jpg,jpeg,webp}",
-      { eager: true }
-    ) as Record<string, any>,
-    cookies: import.meta.glob("./img/cookies/*.{png,jpg,jpeg,webp}", {
-      eager: true,
-    }) as Record<string, any>,
-    "fruit-tarts": import.meta.glob("./img/fruit-tarts/*.{png,jpg,jpeg,webp}", {
-      eager: true,
-    }) as Record<string, any>,
-    "custom-order": import.meta.glob(
-      "./img/custom-order/*.{png,jpg,jpeg,webp}",
-      {
-        eager: true,
-      }
-    ) as Record<string, any>,
-    "custom-cake": import.meta.glob("./img/cakes/*.{png,jpg,jpeg,webp}", {
-      eager: true,
-    }) as Record<string, any>,
-  };
-  const files = filesMap[folderSlug] ?? {};
-  const remoteDefaults: Record<string, string[]> = {
-    cookies: [
-      "https://images.unsplash.com/photo-1499636138143-bd630f5cf38a?auto=format&fit=crop&q=80&w=800&h=800",
-      "https://images.unsplash.com/photo-1507838153414-b4b7135a86d6?auto=format&fit=crop&q=80&w=800&h=800",
-      "https://images.unsplash.com/photo-1513105737059-ff0cf0580b50?auto=format&fit=crop&q=80&w=800&h=800",
-    ],
-    "wedding-cakes": [
-      "https://images.unsplash.com/photo-1519167758481-83f418eec0d6?auto=format&fit=crop&q=80&w=800&h=800",
-      "https://images.unsplash.com/photo-1605927234863-3a7e4a86773b?auto=format&fit=crop&q=80&w=800&h=800",
-      "https://images.unsplash.com/photo-1514986888952-8cd320577b67?auto=format&fit=crop&q=80&w=800&h=800",
-    ],
-  };
-
-  const fallbackFromImages: Cake[] = React.useMemo(() => {
-    const entries = Object.entries(files);
-    if (entries.length === 0 && remoteDefaults[folderSlug]) {
-      return remoteDefaults[folderSlug].map((url, idx) => ({
-        id: 4000 + idx,
-        name: toTitle(`${folderSlug}-${idx + 1}`),
-        image: url,
-        price: 0,
-        description: "",
-        category,
-      }));
-    }
-    return entries.map(([path, mod], idx) => {
-      const url: string = mod.default ?? mod;
-      const base =
-        path
-          .split("/")
-          .pop()
-          ?.replace(/\.[^.]+$/, "") ?? `${folderSlug}-${idx + 1}`;
-      const name = toTitle(base);
-      return {
-        id: 3000 + idx,
-        name,
-        image: url,
-        price: 0,
-        description: "",
-        category,
-      };
-    });
-  }, [category, folderSlug]);
-
-  const [items, setItems] = React.useState<Cake[]>(fallbackFromImages);
+  const [items, setItems] = React.useState<Cake[]>([]);
   const imgRefs = React.useRef<Record<number, HTMLImageElement | null>>({});
+  const [loaded, setLoaded] = React.useState<Record<number, boolean>>({});
   const [page, setPage] = React.useState<number>(1);
   const pageSize = 9;
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
@@ -121,11 +30,21 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
   const paged = items.slice(start, start + pageSize);
 
   React.useEffect(() => {
-    const raw = localStorage.getItem("productsByCategory");
-    const map = raw ? (JSON.parse(raw) as Record<string, Cake[]>) : {};
-    const fromStore = map[category];
-    if (fromStore && Array.isArray(fromStore)) setItems(fromStore);
-  }, [category]);
+    if (db) {
+      const r = ref(db, `productsByCategory/${folderSlug}`);
+      return onValue(r, (snap) => {
+        const val = snap.val() as Cake[] | null;
+        if (val && Array.isArray(val)) setItems(val);
+        else setItems([]);
+      });
+    } else {
+      const raw = localStorage.getItem("productsByCategory");
+      const map = raw ? (JSON.parse(raw) as Record<string, Cake[]>) : {};
+      const fromStore = map[category];
+      if (fromStore && Array.isArray(fromStore)) setItems(fromStore);
+      else setItems([]);
+    }
+  }, [category, folderSlug, db]);
 
   React.useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -147,8 +66,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
 
       {items.length === 0 && (
         <div className="bg-white rounded-2xl border border-brand-dark/10 p-6 text-gray-600">
-          Place your images in {`components/img/${folderSlug}`} and they will
-          appear here.
+          No products yet for {category}. Add items from Admin.
         </div>
       )}
 
@@ -158,13 +76,21 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
             key={cake.id}
             className="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition hover:-translate-y-1 border border-brand-dark/5"
           >
-            <div className="aspect-square overflow-hidden">
+            <div className="relative aspect-square overflow-hidden">
               <img
                 src={cake.image}
                 alt={cake.name}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
                 ref={(el) => (imgRefs.current[cake.id] = el)}
+                onLoad={() =>
+                  setLoaded((prev) => ({ ...prev, [cake.id]: true }))
+                }
               />
+              {!loaded[cake.id] && (
+                <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+              )}
             </div>
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
@@ -172,7 +98,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
                   {cake.name}
                 </h3>
                 <span className="text-brand-green font-bold">
-                  ${cake.price.toFixed(2)}
+                  R{cake.price.toFixed(2)}
                 </span>
               </div>
               <p className="text-gray-600 text-sm mb-4">

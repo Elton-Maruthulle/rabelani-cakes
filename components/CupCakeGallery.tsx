@@ -1,9 +1,11 @@
 import React from "react";
 import { Cake } from "../types";
 
+import { Database, onValue, ref } from "firebase/database";
 interface CupCakeGalleryProps {
   onBack?: () => void;
   onAddToCart?: (cake: Cake) => void;
+  db?: Database;
 }
 
 const toTitle = (s: string) =>
@@ -12,33 +14,11 @@ const toTitle = (s: string) =>
 const CupCakeGallery: React.FC<CupCakeGalleryProps> = ({
   onBack,
   onAddToCart,
+  db,
 }) => {
-  const files = import.meta.glob("./img/cupcakes/*.{png,jpg,jpeg,webp}", {
-    eager: true,
-  }) as Record<string, any>;
-
-  const fallbackFromImages: Cake[] = React.useMemo(() => {
-    return Object.entries(files).map(([path, mod], idx) => {
-      const url: string = mod.default ?? mod;
-      const base =
-        path
-          .split("/")
-          .pop()
-          ?.replace(/\.[^.]+$/, "") ?? `cupcake-${idx + 1}`;
-      const name = toTitle(base);
-      return {
-        id: 2000 + idx,
-        name,
-        image: url,
-        price: 0,
-        description: "",
-        category: "Cup Cakes",
-      };
-    });
-  }, []);
-
-  const [items, setItems] = React.useState<Cake[]>(fallbackFromImages);
+  const [items, setItems] = React.useState<Cake[]>([]);
   const imgRefs = React.useRef<Record<number, HTMLImageElement | null>>({});
+  const [loaded, setLoaded] = React.useState<Record<number, boolean>>({});
   const [page, setPage] = React.useState<number>(1);
   const pageSize = 9;
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
@@ -46,11 +26,19 @@ const CupCakeGallery: React.FC<CupCakeGalleryProps> = ({
   const paged = items.slice(start, start + pageSize);
 
   React.useEffect(() => {
-    const raw = localStorage.getItem("productsByCategory");
-    const map = raw ? (JSON.parse(raw) as Record<string, Cake[]>) : {};
-    const fromStore = map["Cup Cakes"];
-    if (fromStore && Array.isArray(fromStore)) setItems(fromStore);
-  }, []);
+    if (db) {
+      const r = ref(db, "productsByCategory/cup-cakes");
+      return onValue(r, (snap) => {
+        const val = snap.val() as Cake[] | null;
+        if (val && Array.isArray(val)) setItems(val);
+      });
+    } else {
+      const mapRaw = localStorage.getItem("productsByCategory");
+      const map = mapRaw ? (JSON.parse(mapRaw) as Record<string, Cake[]>) : {};
+      const fromStore = map["Cup Cakes"];
+      if (fromStore && Array.isArray(fromStore)) setItems(fromStore);
+    }
+  }, [db]);
 
   React.useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -72,8 +60,7 @@ const CupCakeGallery: React.FC<CupCakeGalleryProps> = ({
 
       {items.length === 0 && (
         <div className="bg-white rounded-2xl border border-brand-dark/10 p-6 text-gray-600">
-          Place your images in `components/img/cupcakes` and they will appear
-          here.
+          No products yet for Cup Cakes. Add items from Admin.
         </div>
       )}
 
@@ -83,13 +70,21 @@ const CupCakeGallery: React.FC<CupCakeGalleryProps> = ({
             key={cake.id}
             className="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition hover:-translate-y-1 border border-brand-dark/5"
           >
-            <div className="aspect-square overflow-hidden">
+            <div className="relative aspect-square overflow-hidden">
               <img
                 src={cake.image}
                 alt={cake.name}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
                 ref={(el) => (imgRefs.current[cake.id] = el)}
+                onLoad={() =>
+                  setLoaded((prev) => ({ ...prev, [cake.id]: true }))
+                }
               />
+              {!loaded[cake.id] && (
+                <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+              )}
             </div>
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
@@ -97,7 +92,7 @@ const CupCakeGallery: React.FC<CupCakeGalleryProps> = ({
                   {cake.name}
                 </h3>
                 <span className="text-brand-green font-bold">
-                  ${cake.price.toFixed(2)}
+                  R{cake.price.toFixed(2)}
                 </span>
               </div>
               <p className="text-gray-600 text-sm mb-4">
