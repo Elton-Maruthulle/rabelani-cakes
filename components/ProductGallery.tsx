@@ -68,9 +68,32 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
     }) as Record<string, any>,
   };
   const files = filesMap[folderSlug] ?? {};
+  const remoteDefaults: Record<string, string[]> = {
+    cookies: [
+      "https://images.unsplash.com/photo-1499636138143-bd630f5cf38a?auto=format&fit=crop&q=80&w=800&h=800",
+      "https://images.unsplash.com/photo-1507838153414-b4b7135a86d6?auto=format&fit=crop&q=80&w=800&h=800",
+      "https://images.unsplash.com/photo-1513105737059-ff0cf0580b50?auto=format&fit=crop&q=80&w=800&h=800",
+    ],
+    "wedding-cakes": [
+      "https://images.unsplash.com/photo-1519167758481-83f418eec0d6?auto=format&fit=crop&q=80&w=800&h=800",
+      "https://images.unsplash.com/photo-1605927234863-3a7e4a86773b?auto=format&fit=crop&q=80&w=800&h=800",
+      "https://images.unsplash.com/photo-1514986888952-8cd320577b67?auto=format&fit=crop&q=80&w=800&h=800",
+    ],
+  };
 
   const fallbackFromImages: Cake[] = React.useMemo(() => {
-    return Object.entries(files).map(([path, mod], idx) => {
+    const entries = Object.entries(files);
+    if (entries.length === 0 && remoteDefaults[folderSlug]) {
+      return remoteDefaults[folderSlug].map((url, idx) => ({
+        id: 4000 + idx,
+        name: toTitle(`${folderSlug}-${idx + 1}`),
+        image: url,
+        price: 0,
+        description: "",
+        category,
+      }));
+    }
+    return entries.map(([path, mod], idx) => {
       const url: string = mod.default ?? mod;
       const base =
         path

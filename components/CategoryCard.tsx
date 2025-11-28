@@ -4,9 +4,21 @@ import { Category } from "../types";
 interface CategoryCardProps {
   category: Category;
   onClick?: () => void;
+  overrideSrc?: string;
 }
 
-const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick }) => {
+const CategoryCard: React.FC<CategoryCardProps> = ({
+  category,
+  onClick,
+  overrideSrc,
+}) => {
+  const [imageSrc, setImageSrc] = React.useState<string>(
+    overrideSrc || category.image
+  );
+  React.useEffect(() => {
+    setImageSrc(overrideSrc || category.image);
+  }, [overrideSrc, category.image]);
+
   return (
     <div
       className={`group relative ${category.bgColor} rounded-[2rem] p-1.5 aspect-square transition-all duration-500 hover:shadow-xl hover:shadow-black/10 hover:-translate-y-2 cursor-pointer overflow-hidden`}
@@ -20,13 +32,13 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick }) => {
       {/* Image Container - Full Fill with internal radius */}
       <div className="w-full h-full rounded-[1.6rem] overflow-hidden relative isolate">
         <img
-          src={category.image}
+          src={imageSrc}
           alt={category.name}
           className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-110"
         />
 
         {/* Text Overlay Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-50 group-hover:opacity-60 transition-opacity duration-300"></div>
 
         {/* Label */}
         <div className="absolute bottom-0 left-0 w-full p-5 transform translate-y-0 transition-transform duration-300">

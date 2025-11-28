@@ -73,6 +73,12 @@ const App: React.FC = () => {
   const [adminMode, setAdminMode] = React.useState<
     "products" | "orders" | "special"
   >(() => (localStorage.getItem("adminMode") as any) || "products");
+  const [categoryCovers, setCategoryCovers] = React.useState<
+    Record<string, string>
+  >(() => {
+    const raw = localStorage.getItem("categoryCoverOverrides");
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  });
 
   const saveCart = (next: CartItem[]) => {
     setCart(next);
@@ -156,6 +162,14 @@ const App: React.FC = () => {
     });
     return () => unsub();
   }, [auth, db]);
+
+  React.useEffect(() => {
+    const coversRef = ref(db, "categoryCovers");
+    onValue(coversRef, (snap) => {
+      const val = snap.val() as Record<string, string> | null;
+      if (val) setCategoryCovers(val);
+    });
+  }, [db]);
 
   const signInGoogle = async () => {
     const provider = new GoogleAuthProvider();
@@ -343,6 +357,7 @@ const App: React.FC = () => {
             <Marquee />
             <div ref={categoryRef}>
               <CategoryGrid
+                coverOverrides={categoryCovers}
                 onCategoryClick={(name) => {
                   if (name === "Cakes") setView("cakes");
                   else if (name === "Cup Cakes") setView("cupcakes");

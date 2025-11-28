@@ -50,7 +50,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
           <h1 className="text-2xl md:text-3xl font-logo text-brand-dark tracking-wide hover:opacity-80 transition-opacity">
-            rabelanis_cakery
+            Rabelanis Cakery
           </h1>
         </div>
 

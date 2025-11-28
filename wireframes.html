@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rabelani Cakery Wireframes</title>
+  <style>
+    :root { --bg:#fafafa; --ink:#222; --muted:#777; --line:#ddd; --accent:#2f9e44; }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--ink); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .page { width: 1024px; margin: 24px auto; background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,0.06); overflow:hidden; }
+    .page-header { padding:16px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; }
+    .title { font-weight:800; letter-spacing:0.5px; }
+    .subtitle { color:var(--muted); font-size:14px; }
+    .section { padding:20px; border-top:1px dashed var(--line); }
+    .section h2 { margin:0 0 12px; font-size:18px; }
+    .grid { display:grid; gap:12px; }
+    .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .box { border:2px dashed var(--line); border-radius:12px; background:#f6f7f8; min-height:80px; padding:12px; display:flex; align-items:center; justify-content:center; text-align:center; }
+    .box.label { min-height:40px; background:#fff; border-style:solid; }
+    .row { display:flex; gap:12px; }
+    .row > .box { flex:1; }
+    .tag { display:inline-block; padding:4px 8px; border:1px solid var(--line); border-radius:999px; font-size:12px; color:var(--muted); }
+    .stack { display:flex; flex-direction:column; gap:12px; }
+    .caption { margin-top:8px; font-size:12px; color:var(--muted); text-align:center; }
+    .divider { height:1px; background:var(--line); margin:16px 0; }
+    .accent { color:var(--accent); font-weight:700; }
+    .pagebreak { page-break-before: always; }
+    @media print {
+      .page { width: 100%; margin:0; border:none; border-radius:0; box-shadow:none; }
+      .page-header { border-bottom:none; }
+      .section { border-top:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <div class="title">Rabelani Cakery Wireframes</div>
+        <div class="subtitle">Desktop Web View</div>
+      </div>
+      <div class="tag">v1.0</div>
+    </div>
+    <div class="section">
+      <h2>Header</h2>
+      <div class="row">
+        <div class="box">Logo</div>
+        <div class="box">Nav: Cakes • Cup Cakes • Catering • Daily Specials • <span class="accent">Offers</span> • Admin</div>
+        <div class="box">Icons: Search • Cart</div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Hero</h2>
+      <div class="row">
+        <div class="box">Headline • CTA: Start Your Order • View Menu</div>
+      </div>
+      <div class="caption">Large visual banner with two prominent actions</div>
+    </div>
+    <div class="section">
+      <h2>Marquee</h2>
+      <div class="box">Ingredients • Gluten-Free Options • Order Before 10AM • Artisan • Wedding Cakes</div>
+    </div>
+    <div class="section">
+      <h2>Category Grid</h2>
+      <div class="grid cols-4">
+        <div class="box">Cakes</div>
+        <div class="box">Cup Cakes</div>
+        <div class="box">Cookies</div>
+        <div class="box">Celebration Cakes</div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Features</h2>
+      <div class="grid cols-3">
+        <div class="box">Fresh Daily</div>
+        <div class="box">Organic Ingredients</div>
+        <div class="box">Custom Designs</div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Featured Item</h2>
+      <div class="row">
+        <div class="box">Image</div>
+        <div class="stack" style="flex:2">
+          <div class="box">Baker's Choice • The Rabelani Signature Truffle</div>
+          <div class="row">
+            <div class="box">Price: R45.00 → R38.50</div>
+            <div class="box">CTA: Add to Cart</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Testimonials</h2>
+      <div class="grid cols-3">
+        <div class="box">Quote</div>
+        <div class="box">Quote</div>
+        <div class="box">Quote</div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Custom Order</h2>
+      <div class="row">
+        <div class="box">Background Visual</div>
+        <div class="stack" style="flex:2">
+          <div class="box">Planning a Dream Event?</div>
+          <div class="box">CTA: Book a Consultation</div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Footer</h2>
+      <div class="grid cols-3">
+        <div class="box">Brand description</div>
+        <div class="box">Contact: Call • Address • Hours</div>
+        <div class="box">Social • Newsletter</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page pagebreak">
+    <div class="page-header">
+      <div>
+        <div class="title">Admin Wireframes</div>
+        <div class="subtitle">Desktop Panels</div>
+      </div>
+      <div class="tag">Admin</div>
+    </div>
+    <div class="section">
+      <h2>Admin Navbar</h2>
+      <div class="row">
+        <div class="box">View Orders</div>
+        <div class="box">Manage Products</div>
+        <div class="box">Special</div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Orders Panel</h2>
+      <div class="stack">
+        <div class="box">Order List • Status • Mark Completed • Reopen</div>
+        <div class="grid cols-3">
+          <div class="box">Item</div>
+          <div class="box">Item</div>
+          <div class="box">Item</div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Manage Products</h2>
+      <div class="grid cols-3">
+        <div class="box">Product Card</div>
+        <div class="box">Product Card</div>
+        <div class="box">Product Card</div>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <div class="box">Add Product Form</div>
+        <div class="box">Import From Images</div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Special Editor</h2>
+      <div class="grid cols-2">
+        <div class="box">Title • Description • Prices • Image URL</div>
+        <div class="box">Preview</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page pagebreak">
+    <div class="page-header">
+      <div>
+        <div class="title">Rabelani Cakery Wireframes</div>
+        <div class="subtitle">Mobile View</div>
+      </div>
+      <div class="tag">Mobile</div>
+    </div>
+    <div class="section">
+      <h2>Home Stack</h2>
+      <div class="stack">
+        <div class="box label">Header: Logo • Menu Toggle</div>
+        <div class="box">Hero: Headline • CTAs</div>
+        <div class="box">Marquee</div>
+        <div class="box">Category List</div>
+        <div class="box">Features</div>
+        <div class="box">Featured Item</div>
+        <div class="box">Testimonials</div>
+        <div class="box">Custom Order</div>
+        <div class="box">Footer: Contact • Hours</div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Product Detail</h2>
+      <div class="stack">
+        <div class="box">Image</div>
+        <div class="box">Name • Description</div>
+        <div class="box">Price • Add to Cart</div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Cart & Checkout</h2>
+      <div class="stack">
+        <div class="box">Cart Items</div>
+        <div class="box">Totals</div>
+        <div class="box">Checkout Form</div>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Admin Mobile</h2>
+      <div class="stack">
+        <div class="box label">Admin Navbar: View Orders • Manage Products • Special</div>
+        <div class="box">Orders List</div>
+        <div class="box">Products Grid</div>
+        <div class="box">Special Editor</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

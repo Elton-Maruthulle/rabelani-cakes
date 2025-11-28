@@ -58,7 +58,7 @@ export const CATEGORIES: Category[] = [
     id: 3,
     name: "Wedding Cakes",
     image:
-      "https://images.unsplash.com/photo-1605927234863-3a7e4a86773b?auto=format&fit=crop&q=80&w=300&h=300",
+      "https://images.unsplash.com/photo-1519167758481-83f418eec0d6?auto=format&fit=crop&q=80&w=300&h=300",
     bgColor: "bg-pink-100",
     hasNotification: false,
   },

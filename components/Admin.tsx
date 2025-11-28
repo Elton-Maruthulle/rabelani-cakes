@@ -1,5 +1,5 @@
 import React from "react";
-import { Database } from "firebase/database";
+import { Database, ref, set } from "firebase/database";
 import { Storage } from "firebase/storage";
 import { Cake } from "../types";
 import { CATEGORIES } from "../constants";
@@ -32,6 +32,7 @@ const Admin: React.FC<AdminProps> = ({
   const [showOrders, setShowOrders] = React.useState(false);
   const [showSpecial, setShowSpecial] = React.useState(false);
   const [products, setProducts] = React.useState<Cake[]>([]);
+  const [coverUrl, setCoverUrl] = React.useState<string>("");
   const [form, setForm] = React.useState<{
     name: string;
     price: string;
@@ -48,6 +49,11 @@ const Admin: React.FC<AdminProps> = ({
     const mapRaw = localStorage.getItem("productsByCategory");
     const map = mapRaw ? (JSON.parse(mapRaw) as Record<string, Cake[]>) : {};
     setProducts(map[selectedCategory] ?? []);
+    const coversRaw = localStorage.getItem("categoryCoverOverrides");
+    const covers = coversRaw
+      ? (JSON.parse(coversRaw) as Record<string, string>)
+      : {};
+    setCoverUrl(covers[selectedCategory] ?? "");
   }, [selectedCategory]);
 
   React.useEffect(() => {
@@ -167,6 +173,19 @@ const Admin: React.FC<AdminProps> = ({
     persist(merged);
   };
 
+  const saveCover = (url: string) => {
+    const coversRaw = localStorage.getItem("categoryCoverOverrides");
+    const covers = coversRaw
+      ? (JSON.parse(coversRaw) as Record<string, string>)
+      : {};
+    covers[selectedCategory] = url;
+    localStorage.setItem("categoryCoverOverrides", JSON.stringify(covers));
+    setCoverUrl(url);
+    const slug = selectedCategory.toLowerCase().replace(/\s+/g, "-");
+    const coverRef = ref(db as any, `categoryCovers/${slug}`);
+    set(coverRef, url);
+  };
+
   return (
     <div className="px-6 py-10 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
@@ -252,6 +271,52 @@ const Admin: React.FC<AdminProps> = ({
               />
             )}
           </div>
+          <div className="mt-8 p-4 rounded-xl border border-brand-dark/10 bg-white/60">
+            <h3 className="text-lg font-bold text-brand-dark mb-3">
+              Category cover image
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+              <input
+                value={coverUrl}
+                onChange={(e) => setCoverUrl(e.target.value)}
+                className="w-full border border-brand-dark/10 rounded-xl px-4 py-2 md:col-span-2"
+                placeholder={`Image URL for ${selectedCategory}`}
+              />
+              <button
+                onClick={() => saveCover(coverUrl.trim())}
+                className="px-4 py-2 rounded-full bg-brand-green text-white hover:bg-amber-600 transition"
+              >
+                Save Cover
+              </button>
+            </div>
+            <div className="mt-3 flex gap-3">
+              <input
+                onChange={(e) =>
+                  e.target.files &&
+                  readFileAsDataUrl(e.target.files[0]).then((u) => saveCover(u))
+                }
+                className="border border-brand-dark/10 rounded-xl px-4 py-2"
+                type="file"
+                accept="image/*"
+              />
+              <button
+                onClick={() => {
+                  const first = products.find((p) => !!p.image);
+                  if (first && first.image) saveCover(first.image);
+                }}
+                className="px-4 py-2 rounded-full border border-brand-dark/10 hover:bg-brand-dark hover:text-white transition"
+              >
+                Use first product image
+              </button>
+              {coverUrl && (
+                <img
+                  src={coverUrl}
+                  alt="cover"
+                  className="h-12 w-12 rounded-lg object-cover"
+                />
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -310,6 +375,12 @@ const Admin: React.FC<AdminProps> = ({
                     className="px-4 py-2 rounded-full border border-red-300 text-red-600 hover:bg-red-600 hover:text-white transition"
                   >
                     Delete
+                  </button>
+                  <button
+                    onClick={() => saveCover(p.image)}
+                    className="px-4 py-2 rounded-full border border-brand-dark/10 hover:bg-brand-dark hover:text-white transition"
+                  >
+                    Set as Cover
                   </button>
                   <span className="text-brand-green font-bold">
                     ${Number(p.price || 0).toFixed(2)}
