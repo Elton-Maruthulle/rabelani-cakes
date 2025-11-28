@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rabelanis_cakery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                dark: "#261F1D" /* Dark Chocolate */,
+                green: "#D97706" /* Golden Amber */,
+                light: "#FFFBF2" /* Warm Cream */,
+                accent: "#F59E0B" /* Honey */,
+              },
+              card: {
+                yellow: "#FFFBEB", // amber-50
+                green: "#FEF3C7", // amber-100 (warm yellow)
+                blue: "#FFEDD5", // orange-100 (warm peach)
+                cyan: "#F3E8FF", // purple-100 (sweet glaze)
+              },
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              logo: ["Pacifico", "cursive"],
+            },
+            animation: {
+              float: "float 6s ease-in-out infinite",
+              "float-delayed": "float 6s ease-in-out 3s infinite",
+              "slide-down": "slideDown 0.8s ease-out forwards",
+              "fade-in-up": "fadeInUp 0.8s ease-out forwards",
+              "scale-in": "scaleIn 0.5s ease-out forwards",
+              "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+              scroll: "scroll 25s linear infinite",
+            },
+          },
+        },
+      };
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #fffbf2;
+        color: #261f1d;
+        overflow-x: hidden;
+      }
+
+      .bg-texture {
+        background-color: #fffbf2;
+        background-image: radial-gradient(#d97706 0.5px, transparent 0.5px),
+          radial-gradient(#d97706 0.5px, #fffbf2 0.5px);
+        background-size: 30px 30px;
+        background-position: 0 0, 15px 15px;
+      }
+
+      @keyframes float {
+        0% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(2deg);
+        }
+        100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+      }
+
+      @keyframes slideDown {
+        from {
+          transform: translateY(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes scroll {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* Utility classes for animation delays */
+      .delay-100 {
+        animation-delay: 100ms;
+      }
+      .delay-200 {
+        animation-delay: 200ms;
+      }
+      .delay-300 {
+        animation-delay: 300ms;
+      }
+      .delay-400 {
+        animation-delay: 400ms;
+      }
+      .delay-500 {
+        animation-delay: 500ms;
+      }
+      .delay-700 {
+        animation-delay: 700ms;
+      }
+
+      .animate-fade-in-up,
+      .animate-scale-in,
+      .animate-slide-down {
+        /* Keep start state invisible if needed via JS, mostly handled by keyframes 'from' */
+      }
+    </style>
+
+    <link rel="stylesheet" href="/index.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
